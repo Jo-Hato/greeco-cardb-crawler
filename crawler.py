@@ -9,7 +9,7 @@ from lib.my_modules import gaussian_sleep as g_sleep
 from lib.my_modules import print_progress as print_prog
 
 # gaussian_sleep用パラメータ: https://keisan.casio.com/exec/system/1180573188
-mu = 6 # 待機時間の平均
+mu = 3 # 待機時間の平均
 sigma = 1 # 待機時間の標準偏差
 
 base_url = "https://rank.greeco-channel.com/access/?pg="
@@ -41,9 +41,27 @@ for page in list(range(1, total_pages+1))[:3]:
         c = session.get(car_url).content
         soup = BeautifulSoup(c, 'html.parser')
         ######################################################
-        # Per page scraping
-        ######################################################
+        ## Per page scraping
+        # ページタイトル
         print(soup.find("title").text)
+
+        # 主要諸元テーブル
+        t1_trs = soup.find("table", class_="tbl350 float_L center line30").find_all("tr")
+        for (i, tr) in enumerate(t1_trs):
+            th = tr.find("th").text
+            if (i != 0):
+                td = tr.find("td").text
+                print(th, td)
+                
+        # エンジン諸元テーブル
+        t1_trs = soup.find("table", class_="tbl350 float_R center line30 mbtm30").find_all("tr")
+        for (i, tr) in enumerate(t1_trs[:-1]):
+            th = tr.find("th").text
+            if (i != 0):
+                td = tr.find("td").text
+                print(th, td)
+                
         g_sleep(mu,sigma)
+        ######################################################
     print_prog(page, total_pages)
     g_sleep(mu, sigma)
