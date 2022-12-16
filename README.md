@@ -3,6 +3,10 @@ An experimental tutorial Python web crawler project using requests.get() and Bea
 This project isn't meant for public use, but for in-school face-to-face teaching.
 
 # 環境構築手順
+## git cloneの手順
+1. 任意のディレクトリ内(e.g. Git_clone/)で`git clone https://github.com/Jo-Hato/greeco-cardb-crawler`でリポジトリをクローンする
+
+## Conda環境構築
 1. `conda list`既存環境を確認する
 2. (if 希望の環境 not exists)`python3 --version`でPythonのバージョン確認
 3. `conda create -n "環境名" python=3.x.xx`で環境を構築する
