@@ -1,5 +1,6 @@
 # greeco-cardb-crawler
-An experimental tutorial Python web crawler project using requests.get() and BeautifulSoup4 for crawling a car database written in Japanese. This isn't a project meant for public use, but for in-school face-to-face teaching.
+An experimental tutorial Python web crawler project using requests.get() and BeautifulSoup4 for crawling a car database written in Japanese.
+This project isn't meant for public use, but for in-school face-to-face teaching. However, feel free to look at or use the code, just don't exploit.
 
 # 環境構築手順
 1. `conda list`既存環境を確認する
