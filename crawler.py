@@ -41,7 +41,7 @@ for page in list(range(1, total_pages+1))[:3]:
         c = session.get(car_url).content
         soup = BeautifulSoup(c, 'html.parser')
         ######################################################
-        ## Per page scraping
+        ######################################################
         # ページタイトル
         print(soup.find("title").text)
 
@@ -61,7 +61,8 @@ for page in list(range(1, total_pages+1))[:3]:
                 td = tr.find("td").text
                 print(th, td)
                 
-        g_sleep(mu,sigma)
+        g_sleep(mu,sigma) # 待機スリープ
         ######################################################
-    print_prog(page, total_pages)
-    g_sleep(mu, sigma)
+        ######################################################
+    print_prog(page, total_pages) # 進行度をプリント
+    g_sleep(mu, sigma) # 待機スリープ
