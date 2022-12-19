@@ -21,8 +21,11 @@ headers = {
 }
 session.headers.update(headers)
 
+
 # 最初のページにアクセス
-c = session.get(base_url).content # 変数名: c = content
+res = session.get(base_url) # request.get(url)的な事をする
+print(res.status_code) # ステータスコードを表示する
+c = res.content # 変数名: c = content
 soup = BeautifulSoup(c, 'html.parser') # Soupを作る
 
 # 最初のページからこれから取得するデータの概要を取得する
