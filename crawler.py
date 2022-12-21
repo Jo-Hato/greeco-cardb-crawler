@@ -4,6 +4,7 @@ from decimal import Decimal
 from time import sleep
 import requests
 from bs4 import BeautifulSoup
+import sqlite3 as sl
 
 # Import My Modules
 from lib.my_modules import gaussian_sleep as g_sleep
@@ -19,13 +20,45 @@ max_retries = 5 # request.get()失敗時の再試行回数
 
 base_url = "https://rank.greeco-channel.com/access/?pg="
 
+# SQLite3
+db_name = "car.db"
+con = sl.connect(db_name)
+cur = con.cursor()
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS car(
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        mfr         TEXT NOT NULL,
+        name        TEXT NOT NULL,
+        type        TEXT,
+        mdl         TEXT,
+        gen         TEXT,
+        grade       TEXT,
+        mfr_year    TEXT,
+        mdl_year    INTEGER,
+        price       INTEGER,
+        tax         INTEGER,
+        w_tax       INTEGER,
+        mand_ins    INTEGER,
+        oil_chg     INTEGER,
+        tire_chg    INTEGER,
+        opt_ins     INTEGER,
+        preloan_cst INTEGER,
+        pstloan_cst INTEGER,
+        annual_chck INTEGER,
+        doors       INTEGER,
+        psngrs      INTEGER,
+        ext_l ext_w ext_h int_l int_w int_h w_base
+        UNIQUE(Name, MdlCode, Grade)
+    );
+""")
+con.commit()
+
 # Requests関連
 session = requests.Session() # Sessionを使う事でrequestsに継続性が保たれる(例: Cookie)
 headers = {
     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
 }
 session.headers.update(headers)
-
 
 # 最初のページにアクセス
 res = p_get(session, base_url, max_retries) # request.get(url)的な事をする
@@ -71,7 +104,7 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
                 "tax", "w_tax", "mand_ins", "oil_chg", "tire_chg", "opt_ins", "preloan_cst", "pstloan_cst", "annual_chck", # Maintenance
                 "doors", "psngrs", # Capacity
                 "ext_l", "ext_w", "ext_h", "int_l", "int_w", "int_h", # Dimensions
-                "w.base", "w.track_f", "w.track_r", "grnd_clr", # Terrain Related Dimensions
+                "w_base", "w_track_f", "w_track_r", "grnd_clr", # Terrain Related Dimensions
                 "turn_rad", # minimum turn radius
                 "weight", # Weight
                 "drive", "gears", "trans", # Driving Characteristics
@@ -129,7 +162,7 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
                 # DATA: price
                 d["price"] = int(td.text.replace("円", ""))
             elif (th == "車両型式"):
-                # DATA: mdl.
+                # DATA: mdl
                 d["mdl"] = td.text
             elif (th == "駆動方式変速機"):
                 # DATA: drive, gears, trans.
@@ -143,7 +176,7 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
                     d["gears"] = int(trans[0])
                     d["trans"] = trans[1]
             elif (th == "ドア/定員"):
-                # DATA: doors, psngrs.
+                # DATA: doors, psngrs
                 td = td.text.split("/")
                 d["doors"] = int(td[0][0])
                 d["psngrs"] = int(td[1][0])
@@ -162,12 +195,12 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
                 d["int_w"] = int(m[1])
                 d["int_h"] = int(m[2])
             elif (th == "軸距＆輪距"):
-                # DATA: w.base, w.track_f, w.track_r
+                # DATA: w_base, w_track_f, w_track_r
                 td = td.get_text("@@@").split("@@@")
-                d["w.base"] = int(td[0][:-2])
+                d["w_base"] = int(td[0][:-2])
                 f_r = td[1].split("/")
-                d["w.track_f"] = int(f_r[0][1:-2])
-                d["w.track_r"] = int(f_r[1][1:-2])
+                d["w_track_f"] = int(f_r[0][1:-2])
+                d["w_track_r"] = int(f_r[1][1:-2])
             elif (th == "最小半径"):
                 # DATA: turn_rad.
                 d["turn_rad"] = float(td.text[:-1])
