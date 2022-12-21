@@ -14,11 +14,12 @@ def persistent_get(session, url, max_retries):
     try:
         return session.get(url)
     except:
-        while max_retries != 0:
-            max_retries -= 1
+        while max_retries >= 0:
+            time.sleep(10)
             try:
                 res = session.get(url)
                 max_retries = 0
                 return res
             except:
                 print(f"!!!Retried to get {url}\nAttempts left: {max_retries}")
+                max_retries -= 1
