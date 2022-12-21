@@ -7,10 +7,14 @@ from bs4 import BeautifulSoup
 # Import My Modules
 from lib.my_modules import gaussian_sleep as g_sleep
 from lib.my_modules import print_progress as print_prog
+from lib.my_modules import persistent_get as p_get
 
 # gaussian_sleep用パラメータ: https://keisan.casio.com/exec/system/1180573188
-mu = 7 # 待機時間の平均
+mu = 8 # 待機時間の平均
 sigma = 3 # 待機時間の標準偏差
+
+# ユーザパラメータ
+max_retries = 5 # request.get()失敗時の再試行回数
 
 base_url = "https://rank.greeco-channel.com/access/?pg="
 
@@ -23,7 +27,7 @@ session.headers.update(headers)
 
 
 # 最初のページにアクセス
-res = session.get(base_url) # request.get(url)的な事をする
+res = p_get(session, base_url, max_retries) # request.get(url)的な事をする
 print(f"{'':#<90}")
 print(f"{'':#<90}")
 print(f"{'':#<90}")
@@ -37,13 +41,13 @@ total_cars = int(re.search(r"全(.*?)件", s).group(1)) # Regexを使ってDBに
 total_pages= int(re.search(r"・(.*?)ページ中", s).group(1)) # Regexを使って総ページ数を取り出す
 print("Total Cars: {}, Total Pages: {}".format(total_cars, total_pages))
 
-for page in list(range(1, total_pages+1))[:10]: # !!!LIMITER
+for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
     ######################################################
     # START: 車十件ずつの一覧ページ
     ######################################################
     # HTTP Request and create Soup
     url = base_url+str(page)
-    c = session.get(url).content
+    c = p_get(session, url, max_retries).content
     soup = BeautifulSoup(c, 'html.parser')
 
     # Find all urls for each car
@@ -51,7 +55,7 @@ for page in list(range(1, total_pages+1))[:10]: # !!!LIMITER
     urls = [url["href"] for url in urls]    
 
     for car_url in urls: # !!!LIMITER
-        c = session.get(car_url).content
+        c = p_get(session, car_url, max_retries).content
         soup = BeautifulSoup(c, 'html.parser')
         print(car_url)
         ######################################################
