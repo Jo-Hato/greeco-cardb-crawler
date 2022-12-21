@@ -41,8 +41,9 @@ s = soup.find("div", class_="theContentWrap-ccc").find_all("p")[4].text # tag内
 total_cars = int(re.search(r"全(.*?)件", s).group(1)) # Regexを使ってDBに登録されている車の総数を取り出す
 total_pages= int(re.search(r"・(.*?)ページ中", s).group(1)) # Regexを使って総ページ数を取り出す
 print("Total Cars: {}, Total Pages: {}".format(total_cars, total_pages))
+print(f"{'':=<70}")
 
-for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
+for page in list(range(1, total_pages+1)): # !!!LIMITER
     ######################################################
     # START: 車十件ずつの一覧ページ
     ######################################################
@@ -67,6 +68,7 @@ for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
                 "mdl", "gen", "grade", # Additional Identifier
                 "mfr_year", "mdl_year", # Years
                 "price", # Cost
+                "tax", "w_tax", "mand_ins", "oil_chg", "tire_chg", "opt_ins", "preloan_cst", "pstloan_cst", "annual_chck", # Maintenance
                 "doors", "psngrs", # Capacity
                 "ext_l", "ext_w", "ext_h", "int_l", "int_w", "int_h", # Dimensions
                 "w.base", "w.track_f", "w.track_r", "grnd_clr", # Terrain Related Dimensions
@@ -244,10 +246,40 @@ for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
                 km = Decimal("100")
                 kmpl = round(float(km/l), 2)
                 d["kmpl"] = kmpl
-            #print(th, td)
             
         ## 維持費テーブル ######
-        
+        e = soup.find("table", class_="w100 line30 font16 spnone")
+        e = e.get_text("@@@").split("@@@")
+        e = [s for s in e if (re.match("[0-9]*円$", s))]
+        for (i, p) in enumerate(e):
+            p = int(p[:-1])
+            if (i == 0):
+                # DATA: tax
+                d["tax"] = p
+            elif (i == 1):
+                # DATA: w_tax
+                d["w_tax"] = p
+            elif (i == 2):
+                # DATA: mand_ins
+                d["mand_ins"] = p
+            elif (i == 4):
+                # DATA: oil_chg
+                d["oil_chg"] = p
+            elif (i == 5):
+                # DATA: tire_chg
+                d["tire_chg"] = p
+            elif (i == 6):
+                # DATA: opt_ins
+                d["opt_ins"] = p
+            elif (i == 9):
+                # DATA: preloan_cst
+                d["preloan_cst"] = p
+            elif (i == 7):
+                # DATA: pstloan_cst
+                d["pstloan_cst"] = p
+            elif (i == 10):
+                # DATA: annual_chck
+                d["annual_chck"] = p
         print(d)
         print(f"{'':=<70}")
         g_sleep(mu,sigma) # 待機スリープ
