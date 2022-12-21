@@ -1,5 +1,6 @@
 # Import Modules
 import re # Regular Expression (Regex)
+from decimal import Decimal
 from time import sleep
 import requests
 from bs4 import BeautifulSoup
@@ -62,37 +63,38 @@ for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
         # START: 車一件の詳細ページ
         ######################################################
         # Create an emtpy dict
-        cols = ["mfr.", "name", "type", # Common Identifier
-                "mod.", "gen.", "grade", # Additional Identifier
-                "mfr._year", "mod._year", # Years
+        cols = ["mfr", "name", "type", # Common Identifier
+                "mdl", "gen", "grade", # Additional Identifier
+                "mfr_year", "mdl_year", # Years
                 "price", # Cost
-                "doors", "psngrs.", # Capacity
-                "ext._l", "ext._w", "ext._h", "int._l", "int._w", "int._h", # Dimensions
-                "w.base", "w.track_f", "w.track_r", "grnd._clr.", # Terrain Related Dimensions
-                "turn_rad.", # minimum turn radius
+                "doors", "psngrs", # Capacity
+                "ext_l", "ext_w", "ext_h", "int_l", "int_w", "int_h", # Dimensions
+                "w.base", "w.track_f", "w.track_r", "grnd_clr", # Terrain Related Dimensions
+                "turn_rad", # minimum turn radius
                 "weight", # Weight
-                "drive", "gears", "trans.", # Driving Characteristics
-                "w._w_f", "w._ratio_f", "w._cnst._f", "w._rim_f", "w._w_r", "w._ratio_r", "w._cnst._r", "w._rim_r", # Tire Dimensions and Construction
+                "drive", "gears", "trans", # Driving Characteristics
+                "eng_mdl", "eng_layout", "cc", "comp_ratio", "comp_type", "kw", "kw_rpm", "trq_nm", "trq_rpm", "fuel", "kmpl",
+                "w_w_f", "w_ratio_f", "w_cnst_f", "w_rim_f", "w_w_r", "w_ratio_r", "w_cnst_r", "w_rim_r", # Tire Dimensions and Construction
                 "brake_f", "brake_r", # Brake Types
                 "img_link"]
         d = dict.fromkeys(cols, "-")
         
         ## ページタイトル ######            
-        # DATA: mod._year
+        # DATA: mdl_year
         title = soup.find("title").text
         m = re.search("\s([0-9]{4})年式", title)
         if m:
-            d["mod._year"] = int(m.group(1))
+            d["mdl_year"] = int(m.group(1))
 
         ## 画像テーブル ######
         # DATA: img_link
         e = soup.find("table", class_="topimg float_L tbl350 font14").find("img")["src"]
         d["img_link"] = e
-        # DATA: mfr._year
+        # DATA: mfr_year
         e = soup.find("table", class_="topimg float_L tbl350 font14").text
         m = re.search("販売期間：(.*)\s-", e)
         if m:
-            d["mfr._year"] = m.group(1)
+            d["mfr_year"] = m.group(1)
 
         ## 説明文 ######
         # DATA: type, gen.
@@ -100,22 +102,22 @@ for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
         m = re.search('乗り(.*)代', e).group(1).split("、")
         d["type"] = m[0]
         try:
-            d["gen."] = int(m[1])
+            d["gen"] = int(m[1])
         except:
             if (m[1] == "初"):
-                d["gen."] = 0
+                d["gen"] = 0
             else:
-                raise ValueError(f"!!!FATAL: Failed to parse {m[1]} as an integer.")
+                raise ValueError(f"!!!FATAL: Failed to parse {m[1]} as an integer")
             
         ## 主要諸元テーブル ######
         t1_trs = soup.find("table", class_="tbl350 float_L center line30").find_all("tr")
-        for (i, tr) in enumerate(t1_trs[1:]):
+        for tr in t1_trs[1:]:
             th = tr.find("th").text
             td = tr.find("td")
             # DATA: MULTI
             if (th == "メーカー"):
                 # DATA: mfr.
-                d["mfr."] = td.text
+                d["mfr"] = td.text
             elif (th == "車名＆グレード"):
                 # DATA: name, grade
                 td = td.get_text("@@@").split("@@@")
@@ -125,38 +127,38 @@ for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
                 # DATA: price
                 d["price"] = int(td.text.replace("円", ""))
             elif (th == "車両型式"):
-                # DATA: mod.
-                d["mod."] = td.text
+                # DATA: mdl.
+                d["mdl"] = td.text
             elif (th == "駆動方式変速機"):
                 # DATA: drive, gears, trans.
                 td = td.get_text("@@@").split("@@@")
                 drive = td[0].split("・")[0]; d["drive"] = drive
                 trans = td[1].split("・")[0]
                 if (trans == "（無段変速機）"):
-                    d["trans."] = trans
+                    d["trans"] = trans
                 else:
                     trans = trans.split("速")
                     d["gears"] = int(trans[0])
-                    d["trans."] = trans[1]
+                    d["trans"] = trans[1]
             elif (th == "ドア/定員"):
                 # DATA: doors, psngrs.
                 td = td.text.split("/")
                 d["doors"] = int(td[0][0])
-                d["psngrs."] = int(td[1][0])
+                d["psngrs"] = int(td[1][0])
             elif (th == "車体寸法"):
-                # DATA: ext._l, ext._w, ext._h
+                # DATA: ext_l, ext_w, ext_h
                 td = td.text
                 m = re.findall("([0-9]+)", td)
-                d["ext._l"] = int(m[0])
-                d["ext._w"] = int(m[1])
-                d["ext._h"] = int(m[2])
+                d["ext_l"] = int(m[0])
+                d["ext_w"] = int(m[1])
+                d["ext_h"] = int(m[2])
             elif (th == "室内寸法"):
-                # DATA: int._l, int._w, int._h
+                # DATA: int_l, int_w, int_h
                 td = td.text
                 m = re.findall("([0-9]+)", td)
-                d["int._l"] = int(m[0])
-                d["int._w"] = int(m[1])
-                d["int._h"] = int(m[2])
+                d["int_l"] = int(m[0])
+                d["int_w"] = int(m[1])
+                d["int_h"] = int(m[2])
             elif (th == "軸距＆輪距"):
                 # DATA: w.base, w.track_f, w.track_r
                 td = td.get_text("@@@").split("@@@")
@@ -166,24 +168,24 @@ for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
                 d["w.track_r"] = int(f_r[1][1:-2])
             elif (th == "最小半径"):
                 # DATA: turn_rad.
-                d["turn_rad."] = float(td.text[:-1])
+                d["turn_rad"] = float(td.text[:-1])
             elif (th == "最低高"):
-                # DATA: grnd._clr
-                d["grnd._clr."] = int(td.text[:-2])
+                # DATA: grnd_clr
+                d["grnd_clr"] = int(td.text[:-2])
             elif (th == "タイヤ"):
                 tds = td.get_text("@@@").split("@@@")
                 for (i, td) in enumerate(tds):
-                    # DATA: w._w_f, w._ratio_f, w._cnst._f, w._rim_f
-                    # DATA: w._w_r, w._ratio_r, w._cnst._r, w._rim_r
+                    # DATA: w_w_f, w_ratio_f, w_cnst_f, w_rim_f
+                    # DATA: w_w_r, w_ratio_r, w_cnst_r, w_rim_r
                     m = re.findall("([0-9]+)", td)
                     w = int(m[0])
                     ratio = int(m[1])
                     cnst = re.search('[A-Z]+', td).group(0)
                     rim = int(m[2])
-                    d[f"w._w_{'fr'[i]}"] = w
-                    d[f"w._ratio_{'fr'[i]}"] = ratio
-                    d[f"w._cnst._{'fr'[i]}"] = cnst
-                    d[f"w._rim_{'fr'[i]}"] = rim
+                    d[f"w_w_{'fr'[i]}"] = w
+                    d[f"w_ratio_{'fr'[i]}"] = ratio
+                    d[f"w_cnst_{'fr'[i]}"] = cnst
+                    d[f"w_rim_{'fr'[i]}"] = rim
             elif (th == "ブレーキ"):
                 # DATA: brake_f, brake_r
                 td = td.get_text("@@@").split("@@@")
@@ -194,13 +196,58 @@ for page in list(range(1, total_pages+1))[:20]: # !!!LIMITER
                 d["weight"] = int(re.findall("([0-9]+)", td.text)[0])
                 
         ## エンジン諸元テーブル ######
-        print(f"{'--Engine Table':-<40}")
         t1_trs = soup.find("table", class_="tbl350 float_R center line30 mbtm30").find_all("tr")
-        for (i, tr) in enumerate(t1_trs[1:-1]):
+        for tr in t1_trs[1:-1]:
             th = tr.find("th").text
-            td = tr.find("td").text
-            print(th, td)
-
+            td = tr.find("td")
+            if (th == "原動機型式"):
+                # DATA: eng_mdl.
+                d["eng_mdl"] = td.text
+            elif (th == "気筒配列"):
+                # DATA: eng_layout
+                d["eng_layout"] = td.text
+            elif (th == "排気量"):
+                # DATA: cc
+                m = re.findall("([0-9]+)", td.text)
+                d["cc"] = int(m[0])
+            elif (th == "圧縮比"):
+                # DATA: comp_ratio
+                d["comp_ratio"] = float(td.text)
+            elif (th == "吸気方式"):
+                # DATA: comp_type
+                d["comp_type"] = td.text
+            elif (th == "最高出力"):
+                # DATA: kw, kw_rpm
+                m = re.findall("([0-9]+)", td.text)
+                kw = int(m[1])
+                rpm = int(m[2])
+                d["kw"] = kw
+                d["kw_rpm"] = rpm
+            elif (th == "最大トルク"):
+                # DATA: trq_nm, trq_rpm
+                m = re.findall("([0-9]+)", td.text)
+                nm = int(re.findall("([0-9]*)Nm", td.text)[0])
+                rpm = int(m[-1])
+                d["trq_nm"] = nm
+                d["trq_rpm"] = rpm
+            elif (th == "使用燃料"):
+                # DATA: fuel
+                d["fuel"] = td.text
+            elif (th == "JC08燃費"): # Maybe a bit skechy
+                # DATA: kmpl
+                m = re.search("([0-9]+\.[0-9]+)", td.text).group(1)
+                d["kmpl"] = float(m[0])
+            elif (th == "100km燃費"): # Maybe a bit skechy
+                # DATA: kmpl
+                m = re.search("([0-9]+\.[0-9]+)", td.text).group(1)
+                l = Decimal(m)
+                km = Decimal("100")
+                kmpl = round(float(km/l), 2)
+                d["kmpl"] = kmpl
+            #print(th, td)
+            
+        ## 維持費テーブル ######
+        
         print(d)
         print(f"{'':=<70}")
         g_sleep(mu,sigma) # 待機スリープ
