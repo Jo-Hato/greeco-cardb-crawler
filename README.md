@@ -7,7 +7,7 @@ This project isn't meant for public use, but for in-school face-to-face teaching
 1. 任意のディレクトリ内(e.g. Git_clone/)で`git clone https://github.com/Jo-Hato/greeco-cardb-crawler`でリポジトリをクローンする
 
 ## Conda環境構築
-1. `conda list`既存環境を確認する
+1. `conda env list`既存環境を確認する
 2. (if 希望の環境 not exists)`python3 --version`でPythonのバージョン確認
 3. `conda create -n "環境名" python=3.x.xx`で環境を構築する
 4. `conda activate 環境名`で環境に入る。(base) -> (環境名)に変化する事を確認する
