@@ -12,8 +12,8 @@ from lib.my_modules import print_progress as print_prog
 from lib.my_modules import persistent_get as p_get
 
 # gaussian_sleep用パラメータ: https://keisan.casio.com/exec/system/1180573188
-mu = 25 # 待機時間の平均
-sigma = 4 # 待機時間の標準偏差
+mu = 15 # 待機時間の平均
+sigma = 2 # 待機時間の標準偏差
 
 # ユーザパラメータ
 max_retries = 5 # request.get()失敗時の再試行回数
@@ -83,8 +83,9 @@ cur.execute("""
         w_rim_r     INTEGER,
         brake_f     TEXT,
         brake_r     TEXT,
+        car_link    TEXT,
         img_link    TEXT,
-        UNIQUE(mfr, name, type, mdl, gen, grade, mdl_year, mfr_year, price)
+        UNIQUE(mfr, name, type, mdl, gen, grade, mdl_year, mfr_year, price, car_link)
     );
 """)
 con.commit()
@@ -147,8 +148,9 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
                 "eng_mdl", "eng_layout", "cc", "comp_ratio", "comp_type", "kw", "kw_rpm", "trq_nm", "trq_rpm", # Engine Specs
                 "w_w_f", "w_ratio_f", "w_cnst_f", "w_rim_f", "w_w_r", "w_ratio_r", "w_cnst_r", "w_rim_r", # Tire Dimensions and Construction
                 "brake_f", "brake_r", # Brake Types
-                "img_link"]
+                "car_link", "img_link"] # Misc
         d = dict.fromkeys(cols, "-")
+        d["car_link"] = car_url
         
         ## ページタイトル ######            
         # DATA: mdl_year
@@ -369,8 +371,8 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
                 drive, gears, trans,
                 eng_mdl, eng_layout, cc, comp_ratio, comp_type, kw, kw_rpm, trq_nm, trq_rpm,
                 w_w_f, w_ratio_f, w_cnst_f, w_rim_f, w_w_r, w_ratio_r, w_cnst_r, w_rim_r,
-                brake_f, brake_r, img_link)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                brake_f, brake_r, car_link, img_link)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             tup)
             con.commit()
         except Exception as e:
