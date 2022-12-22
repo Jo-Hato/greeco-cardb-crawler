@@ -113,7 +113,7 @@ total_pages= int(re.search(r"・(.*?)ページ中", s).group(1)) # Regexを使�
 print("Total Cars: {}, Total Pages: {}".format(total_cars, total_pages))
 print(f"{'':=<70}")
 
-for page in list(range(1, total_pages+1)): # !!!LIMITER
+for page in list(range(181, total_pages+1)): # !!!LIMITER
     ######################################################
     # START: 車十件ずつの一覧ページ
     ######################################################
@@ -292,10 +292,13 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
             elif (th == "最高出力"):
                 # DATA: kw, kw_rpm
                 m = re.findall("([0-9]+)", td.text)
-                kw = int(m[1])
-                rpm = int(m[2])
-                d["kw"] = kw
-                d["kw_rpm"] = rpm
+                try:
+                    kw = int(m[1])
+                    rpm = int(m[2])
+                    d["kw"] = kw
+                    d["kw_rpm"] = rpm
+                except Exception as e:
+                    print(f"!!!{e}")
             elif (th == "最大トルク"):
                 # DATA: trq_nm, trq_rpm
                 m = re.findall("([0-9]+)", td.text)
@@ -372,13 +375,13 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
                 eng_mdl, eng_layout, cc, comp_ratio, comp_type, kw, kw_rpm, trq_nm, trq_rpm,
                 w_w_f, w_ratio_f, w_cnst_f, w_rim_f, w_w_r, w_ratio_r, w_cnst_r, w_rim_r,
                 brake_f, brake_r, car_link, img_link)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
+                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             tup)
             con.commit()
         except Exception as e:
             print(e)
-            raise ValueError(e)
-        
+            #raise ValueError(e)
         g_sleep(mu,sigma) # 待機スリープ
         ######################################################
         # END: 車一件の詳細ページ
