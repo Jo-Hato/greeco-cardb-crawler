@@ -12,8 +12,8 @@ from lib.my_modules import print_progress as print_prog
 from lib.my_modules import persistent_get as p_get
 
 # gaussian_sleep用パラメータ: https://keisan.casio.com/exec/system/1180573188
-mu = 8 # 待機時間の平均
-sigma = 3 # 待機時間の標準偏差
+mu = 25 # 待機時間の平均
+sigma = 4 # 待機時間の標準偏差
 
 # ユーザパラメータ
 max_retries = 5 # request.get()失敗時の再試行回数
@@ -36,6 +36,8 @@ cur.execute("""
         mfr_year    TEXT,
         mdl_year    INTEGER,
         price       INTEGER,
+        fuel        TEXT,
+        kmpl        REAL,
         tax         INTEGER,
         w_tax       INTEGER,
         mand_ins    INTEGER,
@@ -44,7 +46,7 @@ cur.execute("""
         opt_ins     INTEGER,
         preloan_cst INTEGER,
         pstloan_cst INTEGER,
-        annual_chck INTEGER,
+        insp_cst    INTEGER,
         doors       INTEGER,
         psngrs      INTEGER,
         ext_l       INTEGER,
@@ -71,8 +73,6 @@ cur.execute("""
         kw_rpm      INTEGER,
         trq_nm      INTEGER,
         trq_rpm     INTEGER,
-        fuel        TEXT,
-        kmpl        REAL,
         w_w_f       INTEGER,
         w_ratio_f   INTEGER,
         w_cnst_f    TEXT,
@@ -84,7 +84,7 @@ cur.execute("""
         brake_f     TEXT,
         brake_r     TEXT,
         img_link    TEXT,
-        UNIQUE(mfr, name, type, mdl, gen, grade, mdl_year, price)
+        UNIQUE(mfr, name, type, mdl, gen, grade, mdl_year, mfr_year, price)
     );
 """)
 con.commit()
@@ -136,15 +136,15 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
         cols = ["mfr", "name", "type", # Common Identifier
                 "mdl", "gen", "grade", # Additional Identifier
                 "mfr_year", "mdl_year", # Years
-                "price", # Cost
-                "tax", "w_tax", "mand_ins", "oil_chg", "tire_chg", "opt_ins", "preloan_cst", "pstloan_cst", "annual_chck", # Maintenance
+                "price", "kmpl", "fuel", # Cost
+                "tax", "w_tax", "mand_ins", "oil_chg", "tire_chg", "opt_ins", "preloan_cst", "pstloan_cst", "insp_cst", # Maintenance
                 "doors", "psngrs", # Capacity
                 "ext_l", "ext_w", "ext_h", "int_l", "int_w", "int_h", # Dimensions
                 "w_base", "w_track_f", "w_track_r", "grnd_clr", # Terrain Related Dimensions
                 "turn_rad", # minimum turn radius
                 "weight", # Weight
                 "drive", "gears", "trans", # Driving Characteristics
-                "eng_mdl", "eng_layout", "cc", "comp_ratio", "comp_type", "kw", "kw_rpm", "trq_nm", "trq_rpm", "fuel", "kmpl",
+                "eng_mdl", "eng_layout", "cc", "comp_ratio", "comp_type", "kw", "kw_rpm", "trq_nm", "trq_rpm", # Engine Specs
                 "w_w_f", "w_ratio_f", "w_cnst_f", "w_rim_f", "w_w_r", "w_ratio_r", "w_cnst_r", "w_rim_r", # Tire Dimensions and Construction
                 "brake_f", "brake_r", # Brake Types
                 "img_link"]
@@ -347,10 +347,36 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
                 # DATA: pstloan_cst
                 d["pstloan_cst"] = p
             elif (i == 10):
-                # DATA: annual_chck
-                d["annual_chck"] = p
-        print(d)
-        print(f"{'':=<70}")
+                # DATA: insp_cst
+                d["insp_cst"] = p
+        #print(d)
+        #print(f"{'':=<70}")
+
+        # SQLite
+        tup = tuple(d.values())
+        try:
+            con.execute("""INSERT INTO car(
+                mfr, name, type,
+                mdl, gen, grade,
+                mfr_year, mdl_year,
+                price, kmpl, fuel,
+                tax, w_tax, mand_ins, oil_chg, tire_chg, opt_ins, preloan_cst, pstloan_cst, insp_cst,
+                doors, psngrs,
+                ext_l, ext_w, ext_h, int_l, int_w, int_h,
+                w_base, w_track_f, w_track_r, grnd_clr,
+                turn_rad,
+                weight,
+                drive, gears, trans,
+                eng_mdl, eng_layout, cc, comp_ratio, comp_type, kw, kw_rpm, trq_nm, trq_rpm,
+                w_w_f, w_ratio_f, w_cnst_f, w_rim_f, w_w_r, w_ratio_r, w_cnst_r, w_rim_r,
+                brake_f, brake_r, img_link)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            tup)
+            con.commit()
+        except Exception as e:
+            print(e)
+            raise ValueError(e)
+        
         g_sleep(mu,sigma) # 待機スリープ
         ######################################################
         # END: 車一件の詳細ページ
@@ -359,3 +385,5 @@ for page in list(range(1, total_pages+1)): # !!!LIMITER
     ######################################################
     # END: 車十件ずつの一覧ページ
     ######################################################
+cur.close()
+con.close()
