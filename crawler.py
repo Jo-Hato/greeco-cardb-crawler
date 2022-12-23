@@ -12,7 +12,7 @@ from lib.my_modules import print_progress as print_prog
 from lib.my_modules import persistent_get as p_get
 
 # gaussian_sleep用パラメータ: https://keisan.casio.com/exec/system/1180573188
-mu = 15 # 待機時間の平均
+mu = 10 # 待機時間の平均
 sigma = 2 # 待機時間の標準偏差
 
 # ユーザパラメータ
