@@ -17,6 +17,7 @@ sigma = 2 # 待機時間の標準偏差
 
 # ユーザパラメータ
 max_retries = 5 # request.get()失敗時の再試行回数
+start_page = 506 # クロールし始めるページ
 
 base_url = "https://rank.greeco-channel.com/access/?pg="
 
@@ -113,7 +114,7 @@ total_pages= int(re.search(r"・(.*?)ページ中", s).group(1)) # Regexを使�
 print("Total Cars: {}, Total Pages: {}".format(total_cars, total_pages))
 print(f"{'':=<70}")
 
-for page in list(range(181, total_pages+1)): # !!!LIMITER
+for page in list(range(start_page, total_pages+1)): # !!!LIMITER
     ######################################################
     # START: 車十件ずつの一覧ページ
     ######################################################
@@ -172,15 +173,17 @@ for page in list(range(181, total_pages+1)): # !!!LIMITER
         ## 説明文 ######
         # DATA: type, gen.
         e = soup.find("p").text
-        m = re.search('乗り(.*)代', e).group(1).split("、")
-        d["type"] = m[0]
-        try:
-            d["gen"] = int(m[1])
-        except:
-            if (m[1] == "初"):
-                d["gen"] = 0
-            else:
-                raise ValueError(f"!!!FATAL: Failed to parse {m[1]} as an integer")
+        m = re.search('乗り(.*)代', e)
+        if m:
+            m = m.group(1).split("、")
+            d["type"] = m[0]
+            try:
+                d["gen"] = int(m[1])
+            except:
+                if (m[1] == "初"):
+                    d["gen"] = 0
+                else:
+                    raise ValueError(f"!!!FATAL: Failed to parse {m[1]} as an integer")
             
         ## 主要諸元テーブル ######
         t1_trs = soup.find("table", class_="tbl350 float_L center line30").find_all("tr")
